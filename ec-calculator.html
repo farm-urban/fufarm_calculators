@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrient Top-Up Calculator — Farm Urban</title>
+<style>
+  :root{
+    /* Farm Urban brand palette */
+    --teal:#24A6A6;
+    --teal-dark:#0F4C4C;
+    --teal-tint:#EAF6F6;
+    --teal-border:#BFE3E1;
+    --orange:#F25C05;
+    --orange-text:#C24802;
+    --peach:#F2AD94;
+    --peach-tint:#FCEEE8;
+    --peach-border:#F1CBB9;
+    --olive:#7C8C03;
+    --khaki:#A6A26A;
+    --paper:#FAF7F1;
+    --ink:#22261C;
+    --ink-soft:#6B6A55;
+    --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 18px 60px;
+  }
+
+  /* subtle grown-in texture on the background, in brand hues */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(36,166,166,0.08) 0, transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(242,92,5,0.06) 0, transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:520px;
+  }
+
+  header.brand{
+    margin-bottom:26px;
+  }
+  .logo{
+    color:var(--teal-dark);
+    height:32px;
+    width:auto;
+    display:block;
+  }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--teal-border);
+    border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(15,76,76,0.05), 0 12px 32px -18px rgba(15,76,76,0.28);
+    padding:28px 26px 24px;
+  }
+
+  .field{
+    margin-bottom:18px;
+  }
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:.86rem;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .field label .unit{
+    font-weight:500;
+    color:var(--ink-soft);
+    font-size:.76rem;
+  }
+  .field input,
+  .field select{
+    width:100%;
+    padding:11px 13px;
+    font-size:1rem;
+    border:1.5px solid var(--teal-border);
+    border-radius:9px;
+    background:var(--teal-tint);
+    color:var(--ink);
+    font-family:inherit;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .field select{
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%236B6A55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:36px;
+  }
+  .field input:focus,
+  .field select:focus{
+    outline:none;
+    border-color:var(--teal);
+    background-color:#fff;
+  }
+  .field .hint{
+    font-size:.74rem;
+    color:var(--ink-soft);
+    margin-top:5px;
+  }
+
+  .info-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:var(--teal-tint);
+  color:var(--teal-dark);
+  font-size:.72rem;
+  font-style:normal;
+  cursor:help;
+  margin-left:2px;
+  }
+
+  .info-icon:hover,
+  .info-icon:focus{
+    background:var(--teal);
+    color:#fff;
+    outline:none;
+  }
+
+  .row2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  /* EC gauge — the signature element */
+  .gauge-block{
+    margin:22px 0 24px;
+  }
+  .gauge-track{
+    position:relative;
+    height:10px;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--teal-tint),var(--khaki));
+    overflow:visible;
+  }
+  .gauge-fill{
+    position:absolute;
+    left:0;top:0;bottom:0;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--teal),var(--teal-dark));
+    width:0%;
+    transition:width .25s ease;
+  }
+  .gauge-marker{
+    position:absolute;
+    top:50%;
+    width:16px;height:16px;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    border:3px solid #fff;
+    box-shadow:0 0 0 1.5px rgba(15,76,76,0.35);
+    transition:left .25s ease;
+  }
+  .gauge-marker.base{ background:var(--olive); width:12px; height:12px; }
+  .gauge-marker.current{ background:var(--orange); }
+  .gauge-marker.target{ background:var(--teal-dark); }
+  .gauge-labels{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+    font-size:.72rem;
+    color:var(--ink-soft);
+  }
+  .gauge-legend{
+    display:flex;
+    gap:16px;
+    margin-top:10px;
+    font-size:.76rem;
+    color:var(--ink-soft);
+    flex-wrap:wrap;
+  }
+  .gauge-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.base{background:var(--olive);}
+  .dot.current{background:var(--orange);}
+  .dot.target{background:var(--teal-dark);}
+
+  .result{
+    margin-top:6px;
+    padding:20px 20px;
+    border-radius:12px;
+    background:linear-gradient(155deg,var(--teal),var(--teal-dark));
+    color:#fff;
+    text-align:center;
+  }
+  .result .figure{
+    font-size:2.4rem;
+    font-weight:800;
+    letter-spacing:-0.02em;
+    line-height:1;
+  }
+  .result .figure .u{
+    font-size:1.1rem;
+    font-weight:600;
+    margin-left:4px;
+    color:var(--peach);
+  }
+  .result .caption{
+    margin-top:6px;
+    font-size:.8rem;
+    color:#e3f4f3;
+  }
+
+  .result.warn{
+    background:var(--peach-tint);
+    color:var(--orange-text);
+    border:1.5px solid var(--peach-border);
+  }
+  .result.warn .figure{color:var(--orange-text);}
+  .result.warn .figure .u{color:var(--orange-text);}
+  .result.warn .caption{color:#9c5230;}
+
+  .note{
+    margin-top:18px;
+    font-size:.76rem;
+    line-height:1.5;
+    color:var(--ink-soft);
+    border-top:1px dashed var(--teal-border);
+    padding-top:14px;
+  }
+
+  footer{
+    margin-top:24px;
+    text-align:center;
+    font-size:.72rem;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:400px){
+    .row2{grid-template-columns:1fr;}
+    .result .figure{font-size:2rem;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <svg class="logo" viewBox="0 0 205 30" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Farm Urban">
+      <path fill="currentColor" d="m 24.624527,27.534373 c -6.8356,-1.4873 -9.30063,-10.59733 -4.234967,-15.651296 2.962139,-2.9553293 7.847324,-3.3815273 11.00764,-0.960388 l 0.787711,0.603474 v -0.478027 c 0,-1.1534883 2.069198,-1.8332333 2.937689,-0.965017 0.503501,0.503267 0.54068,16.120444 0.03991,16.757064 -0.716021,0.91023 -2.671257,0.5591 -2.90892,-0.52241 -0.05373,-0.24444 -0.112651,-0.50892 -0.130934,-0.58772 -0.0182,-0.0788 -0.262476,0.0496 -0.542637,0.28537 -1.725088,1.45156 -4.490045,2.05539 -6.955495,1.51895 z m 4.808388,-3.40928 c 0.655336,-0.24616 1.272609,-0.65191 1.865664,-1.22635 l 0.886332,-0.85849 v -3.51898 -3.519055 L 31.429773,14.24708 c -3.823442,-3.823438 -10.464305,-1.118386 -10.424923,4.246463 0.03317,4.52083 4.118294,7.25045 8.428065,5.63155 z m 78.076295,3.47577 c -4.04882,-0.62269 -7.11004,-3.40939 -7.90949,-7.20019 -0.19647,-0.93176 -0.24535,-2.76657 -0.24767,-9.297086 -0.004,-9.4774313 -0.11875,-8.8621273 1.66196,-8.8621273 1.77022,0 1.65152,-0.615821 1.65437,8.5820843 0.004,8.562169 0.0661,9.313529 0.90771,10.749619 2.44894,4.17882 9.89305,3.97927 11.92316,-0.3196 0.70079,-1.484 0.76535,-2.37706 0.76535,-10.584863 0,-9.0186383 -0.11551,-8.4272403 1.64636,-8.4272403 1.76805,0 1.67093,-0.52051 1.66753,8.9361283 -0.004,6.348685 -0.0532,8.299975 -0.23993,9.180925 -1.06872,5.04316 -6.10002,8.12347 -11.82935,7.24235 z m 42.58625,-0.0426 c -1.22016,-0.28944 -2.04023,-0.65867 -3.00904,-1.35467 -0.98687,-0.70902 -0.97108,-0.70888 -0.97108,-0.008 0,1.08257 -1.96801,1.57879 -2.79025,0.70352 l -0.36073,-0.3838 V 14.741231 c 0,-13.5512733 -0.12976,-12.4998713 1.54505,-12.4998713 1.65414,0 1.60593,-0.144373 1.60593,4.818706 0,2.366265 0.0562,4.3023683 0.12503,4.3023683 0.0687,0 0.49082,-0.260244 0.93836,-0.578331 4.80199,-3.4141453 11.89321,-0.475489 13.30081,5.511991 1.53816,6.542649 -4.17217,12.735739 -10.38408,11.262089 z m 3.93864,-3.52217 c 4.66099,-2.28036 4.4023,-9.380024 -0.40686,-11.179428 -2.32463,-0.869691 -5.26585,-0.184709 -6.82833,1.590247 l -0.68357,0.776556 v 3.232375 c 0,2.95123 0.029,3.2794 0.33425,3.7732 1.30041,2.10415 5.11817,3.01375 7.58451,1.80705 z m 16.15453,3.4073 c -3.7505,-0.98246 -6.34859,-4.24331 -6.61284,-8.30047 -0.48806,-7.483196 7.43761,-12.4108933 13.4626,-8.370649 l 1.08357,0.726603 v -0.553834 c 0,-1.1686213 1.9881,-1.7169233 2.90391,-0.800916 0.44308,0.442928 0.36281,16.359696 -0.0845,16.807126 -0.84658,0.84661 -2.81937,0.26646 -2.81937,-0.82918 0,-0.61334 -0.0518,-0.61477 -0.80507,-0.0221 -1.93435,1.52184 -4.55883,2.01642 -7.12826,1.34337 z m 4.08454,-2.98614 c 1.17338,-0.27067 2.22736,-0.84916 3.06128,-1.68021 l 0.78751,-0.78519 v -3.41121 -3.411274 l -0.6836,-0.741472 c -2.89065,-3.136205 -8.09144,-2.430366 -9.95265,1.350849 -2.2969,4.665217 1.75063,9.840337 6.78746,8.678507 z M 2.9070343,26.875883 2.499981,26.468823 V 14.792098 c 0,-11.5619223 0.0037,-11.6810323 0.3437173,-12.1136863 l 0.343691,-0.436952 h 6.443616 6.4436057 l 0.343698,0.436952 c 0.367282,0.466913 0.443787,1.268375 0.185757,1.946923 -0.25514,0.671109 -1.004298,0.765094 -6.105717,0.76613 l -4.6882037,0.0022 0.04475,3.524047 0.04475,3.5240473 3.787737,0.08291 c 4.3406537,0.09502 4.4212217,0.12372 4.4212217,1.575466 0,1.45174 -0.08057,1.480416 -4.4212217,1.575456 l -3.787737,0.08283 -0.08291,5.527652 c -0.09494,6.32813 -0.0061,5.99807 -1.614711,5.99807 -0.721637,0 -0.964181,-0.0762 -1.295001,-0.40705 z m 36.6036427,0.0231 c -1.12057,-1.19279 -0.201223,-2.60123 1.69792,-2.60123 h 1.244416 l 0.0484,-6.87782 0.04837,-6.877835 0.377749,-0.377578 c 1.011928,-1.0115053 2.856074,-0.3185963 2.856074,1.073109 v 0.667691 l 0.834499,-0.780572 c 2.834221,-2.6510873 8.524587,-2.2112533 7.772803,0.60077 -0.323112,1.208568 -0.761167,1.420021 -2.140239,1.033089 -2.161104,-0.606393 -4.18341,-0.03754 -5.724773,1.610313 l -0.74229,0.793547 v 4.567656 4.56764 h 3.15847 c 3.13229,0 3.161828,0.004 3.565501,0.40705 0.524719,0.52472 0.554078,1.51719 0.06334,2.14106 l -0.343709,0.43695 h -6.17798 -6.177957 z m 19.576857,0.12568 -0.368549,-0.25814 v -8.18772 c 0,-9.0606643 -0.05793,-8.5897173 1.082177,-8.8035783 1.3252,-0.248613 2.068683,0.2769523 2.068683,1.4624123 v 0.818861 l 0.870656,-0.786942 c 3.03453,-2.7428333 7.74375,-2.4790053 9.73273,0.545211 l 0.57019,0.866976 1.00527,-0.962235 c 4.41743,-4.2282223 10.43013,-2.6914983 11.62107,2.970143 0.42445,2.017692 0.35639,11.820002 -0.0851,12.261492 -0.45671,0.4567 -1.95366,0.46559 -2.51065,0.0149 l -0.39152,-0.3168 -0.0839,-5.6119 c -0.0696,-4.65138 -0.12913,-5.711281 -0.348,-6.192354 -1.32743,-2.917582 -4.88448,-3.201332 -7.47472,-0.596264 l -0.86475,0.869687 -0.009,5.732481 c -0.0105,6.69638 0.0544,6.43192 -1.57849,6.43192 -1.66799,0 -1.56881,0.36184 -1.66658,-6.08092 -0.0921,-6.066602 -0.10872,-6.181775 -1.07636,-7.450402 -1.45138,-1.902866 -4.88277,-1.612423 -6.940496,0.587431 l -0.770334,0.82353 v 5.728481 c 0,5.5074 -0.01282,5.74133 -0.331671,6.06019 -0.417896,0.41789 -1.895685,0.46224 -2.45067,0.0735 z m 63.953336,-0.0589 c -0.32016,-0.25929 -0.3915,-0.47337 -0.3915,-1.17549 0,-1.23201 0.36512,-1.49255 2.09135,-1.49255 h 1.30831 v -6.86391 c 0,-8.0035123 -0.0719,-7.6468803 1.54341,-7.6468803 1.15839,0 1.60752,0.3546603 1.60752,1.2694833 0,0.746557 0.13093,0.789754 0.66632,0.21984 2.15987,-2.2990273 8.12816,-2.5476113 8.12212,-0.338249 -0.004,1.602431 -0.70377,2.209991 -2.12161,1.842646 -2.32737,-0.603103 -4.14511,-0.152307 -5.71472,1.417339 l -0.95749,0.957502 0.0441,4.529659 0.0442,4.52966 3.23383,0.092 c 1.77862,0.0506 3.24718,0.10657 3.2635,0.12435 0.0165,0.0178 0.14687,0.14969 0.29018,0.293 0.39444,0.3944 0.34936,1.80656 -0.0711,2.22696 -0.50426,0.50434 -12.33713,0.51771 -12.95841,0.0146 z m 63.20732,-0.0145 c -0.50629,-0.50627 -0.52005,-16.148712 -0.015,-16.772698 0.88491,-1.0927523 2.74001,-0.4336453 2.9358,1.043089 l 0.10559,0.795768 0.76704,-0.682099 c 2.89546,-2.5756163 7.66998,-2.6139423 10.20178,-0.08191 1.89506,1.894731 2.25661,3.52395 2.25661,10.16778 0,5.92339 0.0186,5.85456 -1.67406,5.8592 -1.6026,0.004 -1.54584,0.21473 -1.64279,-6.10905 -0.0772,-5.050381 -0.10621,-5.464262 -0.43049,-6.16041 -1.47172,-3.16139 -5.53403,-3.419694 -8.54913,-0.543644 l -0.95424,0.910332 -0.0498,5.603812 c -0.0579,6.5617 0.0124,6.30151 -1.65074,6.30151 -0.74812,0 -1.04489,-0.0757 -1.30087,-0.33167 z"/>
+    </svg>
+  </header>
+
+  <div class="card">
+
+    <div class="field">
+      <label for="volPreset">Tank size</label>
+      <select id="volPreset">
+        <option value="5-tower">5-tower (60 L)</option>
+        <option value="8-tower">8-tower (100 L)</option>
+        <option value="custom">Custom</option>
+      </select>
+      <div class="hint">Pick your system, or enter a custom volume.</div>
+    </div>
+
+    <div class="field" id="customVolField">
+      <label for="volCustom">Custom volume <span class="unit">litres</span></label>
+      <input type="number" id="volCustom" inputmode="decimal" placeholder="e.g. 140" min="0" step="any">
+    </div>
+
+    <div class="field">
+      <label for="baseec">Base EC <span class="unit">mS/cm — your tap water, no nutrient</span></label>
+      <input type="number" id="baseec" inputmode="decimal" placeholder="e.g. 0.4" min="0" step="any">
+      <div class="hint">EC of your plain tap water before any nutrient is added. Measure it once and it'll be remembered.</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="eci">Current EC <span class="unit">mS/cm</span></label>
+        <input type="number" id="eci" inputmode="decimal" placeholder="e.g. 1.3" min="0" step="any">
+      </div>
+      <div class="field">
+        <label for="ecd">Target EC <span class="unit">mS/cm</span>
+          <span class="info-icon" tabindex="0" title="The required EC excluding the Base EC">ⓘ</span>
+        </label>
+        <input type="number" id="ecd" inputmode="decimal" placeholder="e.g. 1.8" min="0" step="any">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="dose">Nutrient dose rate <span class="unit">ml per litre, for target EC</span></label>
+      <input type="number" id="dose" inputmode="decimal" placeholder="e.g. 7" min="0" step="any">
+      <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
+    </div>
+
+    <div class="gauge-block">
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gaugeFill"></div>
+        <div class="gauge-marker base" id="markerBase" style="left:0%"></div>
+        <div class="gauge-marker current" id="markerCurrent" style="left:0%"></div>
+        <div class="gauge-marker target" id="markerTarget" style="left:0%"></div>
+      </div>
+      <div class="gauge-labels">
+        <span>0</span>
+        <span id="gaugeMax">—</span>
+      </div>
+      <div class="gauge-legend">
+        <span><i class="dot base"></i>Base EC</span>
+        <span><i class="dot current"></i>Current EC</span>
+        <span><i class="dot target"></i>Target EC</span>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="figure" id="figure">— <span class="u">ml</span></div>
+      <div class="caption" id="caption">Enter your tank details above</div>
+    </div>
+
+    <!-- <p class="note">
+      Formula: <strong>ml to add = dose rate × volume × (target EC − current EC) ÷ (target EC − base EC)</strong>.
+      This assumes EC rises roughly linearly with nutrient concentration above your tap
+      water's baseline, and that tank volume stays effectively constant after dosing — both
+      standard, safe assumptions for small top-ups. Always dose gradually and re-check EC
+      before adding more.
+    </p> -->
+
+  </div>
+
+  <footer><a href="https://www.farmurban.co.uk" target="_blank" rel="noopener noreferrer">Farm Urban</a> · hydroponic nutrient top-up tool</a></footer>
+</div>
+
+<script>
+(function(){
+  // Defaults applied only when nothing has been saved for that field yet.
+  const DEFAULT_DOSE_ML_PER_L = 7;
+  const DEFAULT_TARGET_EC = 1.8;
+
+  // Tank size presets, in litres.
+  const TOWER_VOLUMES_L = {
+    '5-tower': 60,
+    '8-tower': 100
+  };
+
+  const volPreset = document.getElementById('volPreset');
+  const volCustom = document.getElementById('volCustom');
+  const customVolField = document.getElementById('customVolField');
+  const baseec = document.getElementById('baseec');
+  const eci = document.getElementById('eci');
+  const ecd = document.getElementById('ecd');
+  const dose = document.getElementById('dose');
+
+  const figure = document.getElementById('figure');
+  const caption = document.getElementById('caption');
+  const result = document.getElementById('result');
+
+  const gaugeFill = document.getElementById('gaugeFill');
+  const markerBase = document.getElementById('markerBase');
+  const markerCurrent = document.getElementById('markerCurrent');
+  const markerTarget = document.getElementById('markerTarget');
+  const gaugeMax = document.getElementById('gaugeMax');
+
+  // Fields remembered between visits. Current EC is deliberately excluded —
+  // it's a fresh measurement every time.
+  const STORE_PREFIX = 'fuEcCalc_';
+  const PERSISTED = { volPreset, volCustom, baseec, ecd, dose };
+
+  function loadStored(){
+    let anyDoseSaved = false;
+    let anyEcdSaved = false;
+    Object.entries(PERSISTED).forEach(([key, el]) => {
+      try {
+        const saved = localStorage.getItem(STORE_PREFIX + key);
+        if (saved !== null){
+          el.value = saved;
+          if (key === 'dose') anyDoseSaved = true;
+          if (key === 'ecd') anyEcdSaved = true;
+        }
+      } catch (e) { /* storage unavailable — ignore, form just won't persist */ }
+    });
+    // First-ever load (nothing saved yet): seed the standard defaults.
+    if (!anyDoseSaved) dose.value = DEFAULT_DOSE_ML_PER_L;
+    if (!anyEcdSaved) ecd.value = DEFAULT_TARGET_EC;
+  }
+
+  function storeField(key, el){
+    try { localStorage.setItem(STORE_PREFIX + key, el.value); }
+    catch (e) { /* storage unavailable — ignore */ }
+  }
+
+  function fmt(n, dp){
+    return n.toLocaleString(undefined, {minimumFractionDigits:dp, maximumFractionDigits:dp});
+  }
+
+  function syncCustomVolVisibility(){
+    customVolField.style.display = (volPreset.value === 'custom') ? '' : 'none';
+  }
+
+  function currentVolumeL(){
+    if (volPreset.value in TOWER_VOLUMES_L) return TOWER_VOLUMES_L[volPreset.value];
+    return parseFloat(volCustom.value);
+  }
+
+  function update(){
+    const Vt_L = currentVolumeL();
+    const EC0 = parseFloat(baseec.value);
+    const ECi = parseFloat(eci.value);
+    const ECd = parseFloat(ecd.value);
+    const Nml = parseFloat(dose.value);
+
+    const haveAll = [Vt_L, EC0, ECi, ECd, Nml].every(v => !isNaN(v) && v >= 0) && Vt_L > 0 && ECd > 0 && Nml > 0;
+
+    // gauge — scaled 0 to a bit past the largest EC value entered
+    const gaugeVals = [EC0, ECi, ECd].filter(v => !isNaN(v));
+    if (gaugeVals.length){
+      const scaleMax = Math.max(...gaugeVals, 0.001) * 1.15;
+      gaugeMax.textContent = fmt(scaleMax, 1) + ' mS/cm';
+      const pct = v => Math.min(100, Math.max(0, (v / scaleMax) * 100));
+      markerBase.style.left = (isNaN(EC0) ? 0 : pct(EC0)) + '%';
+      markerCurrent.style.left = (isNaN(ECi) ? 0 : pct(ECi)) + '%';
+      markerTarget.style.left = (isNaN(ECd) ? 0 : pct(ECd)) + '%';
+      gaugeFill.style.width = (isNaN(ECi) ? 0 : pct(ECi)) + '%';
+    } else {
+      gaugeMax.textContent = '—';
+      markerBase.style.left = '0%';
+      markerCurrent.style.left = '0%';
+      markerTarget.style.left = '0%';
+      gaugeFill.style.width = '0%';
+    }
+
+    if (!haveAll){
+      result.classList.remove('warn');
+      figure.innerHTML = '— <span class="u">ml</span>';
+      caption.textContent = 'Enter your tank details above';
+      return;
+    }
+
+    if (ECd <= EC0){
+      result.classList.add('warn');
+      figure.innerHTML = 'n/a';
+      caption.textContent = 'Target EC must be higher than your tap water\'s base EC.';
+      return;
+    }
+
+    if (ECi > ECd){
+      result.classList.add('warn');
+      figure.innerHTML = 'n/a';
+      caption.textContent = 'Current EC is already above target — dilute with water instead of adding nutrient.';
+      return;
+    }
+
+    // ml to add = dose rate x volume x (target EC - current EC) / (target EC - base EC)
+    const mlToAdd = Nml * Vt_L * (ECd - ECi) / (ECd - EC0);
+
+    result.classList.remove('warn');
+    figure.innerHTML = fmt(mlToAdd, 1) + ' <span class="u">ml</span>';
+    caption.textContent = `to raise ${fmt(Vt_L,1)} L from EC ${ECi} to EC ${ECd}`;
+  }
+
+  loadStored();
+  syncCustomVolVisibility();
+
+  [volPreset, volCustom, baseec, eci, ecd, dose].forEach(el => el.addEventListener('input', update));
+  volPreset.addEventListener('change', syncCustomVolVisibility);
+  volPreset.addEventListener('change', update);
+  Object.entries(PERSISTED).forEach(([key, el]) => {
+    el.addEventListener('input', () => storeField(key, el));
+    el.addEventListener('change', () => storeField(key, el));
+  });
+
+  update();
+})();
+</script>
+
+</body>
+</html>
