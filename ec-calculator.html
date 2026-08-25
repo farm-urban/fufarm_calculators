@@ -294,11 +294,6 @@
   const caption = document.getElementById('caption');
   const result = document.getElementById('result');
 
-  const gaugeFill = document.getElementById('gaugeFill');
-  const markerBase = document.getElementById('markerBase');
-  const markerCurrent = document.getElementById('markerCurrent');
-  const markerTarget = document.getElementById('markerTarget');
-  const gaugeMax = document.getElementById('gaugeMax');
   const finalEcRow = document.getElementById('finalEcRow');
   const finalEcValue = document.getElementById('finalEcValue');
 
@@ -359,25 +354,6 @@
       finalEcValue.textContent = fmt(finalEC, 2);
     } else {
       finalEcRow.style.display = 'none';
-    }
-
-    // gauge — scaled 0 to a bit past the largest EC value entered (all on the same
-    // "total meter reading" axis: base, current, and the final target)
-    const gaugeVals = [EC0, ECi, finalEC].filter(v => !isNaN(v));
-    if (gaugeVals.length){
-      const scaleMax = Math.max(...gaugeVals, 0.001) * 1.15;
-      gaugeMax.textContent = fmt(scaleMax, 1) + ' mS/cm';
-      const pct = v => Math.min(100, Math.max(0, (v / scaleMax) * 100));
-      markerBase.style.left = (isNaN(EC0) ? 0 : pct(EC0)) + '%';
-      markerCurrent.style.left = (isNaN(ECi) ? 0 : pct(ECi)) + '%';
-      markerTarget.style.left = (isNaN(finalEC) ? 0 : pct(finalEC)) + '%';
-      gaugeFill.style.width = (isNaN(ECi) ? 0 : pct(ECi)) + '%';
-    } else {
-      gaugeMax.textContent = '—';
-      markerBase.style.left = '0%';
-      markerCurrent.style.left = '0%';
-      markerTarget.style.left = '0%';
-      gaugeFill.style.width = '0%';
     }
 
     if (!haveAll){
