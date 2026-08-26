@@ -148,13 +148,13 @@
     text-align:center;
   }  
 
-  .result .figure, #finalEcValue{
+  .result .stat-figure{
     font-size:2.4rem;
     font-weight:800;
     letter-spacing:-0.02em;
     line-height:1;
   }
-  .result .figure .u{
+  .result .stat-figure .u{
     font-size:1.1rem;
     font-weight:600;
     margin-left:4px;
@@ -173,22 +173,16 @@
     font-size:.82rem;
     color:var(--teal-pale-text);
   }
-  .result .final-ec strong{
-    color:var(--white);
-    font-weight:800;
-    font-size:.95rem;
-  }
 
   .result.warn{
     background:var(--peach-tint);
     color:var(--orange-text);
     border:1.5px solid var(--peach-border);
   }
-  .result.warn .figure{color:var(--orange-text);}
-  .result.warn .figure .u{color:var(--orange-text);}
+  .result.warn .stat-figure{color:var(--orange-text);}
+  .result.warn .stat-figure .u{color:var(--orange-text);}
   .result.warn .caption{color:var(--warn-text);}
   .result.warn .final-ec{ border-top-color:rgba(var(--orange-text-rgb),0.25); color:var(--warn-text); }
-  .result.warn .final-ec strong{ color:var(--orange-text); }
 
   .note{
     margin-top:18px;
@@ -208,7 +202,7 @@
 
   @media (max-width:400px){
     .row2{grid-template-columns:1fr;}
-    .result .figure{font-size:2rem;}
+    .result .stat-figure{font-size:2rem;}
   }
 </style>
 </head>
@@ -264,9 +258,9 @@
     </div>
 
     <div class="result" id="result">
-      <div class="figure" id="figure">— <span class="u">ml</span></div>
+      <div class="stat-figure" id="figure">— <span class="u">ml</span></div>
       <div class="caption" id="caption">Enter your tank details above</div>
-      <div class="final-ec" id="finalEcRow" style="display:none">Final EC to measure: <strong id="finalEcValue">—</strong> mS/cm</div>
+      <div class="final-ec" id="finalEcRow" style="display:none">Final EC to measure: <strong class="stat-figure" id="finalEcValue">—</strong></div>
     </div>
 
     <!-- <p class="note">
@@ -364,7 +358,7 @@
     const finalEC = (!isNaN(ECd) && !isNaN(EC0)) ? ECd + EC0 : NaN;
     if (!isNaN(finalEC)){
       finalEcRow.style.display = '';
-      finalEcValue.textContent = fmt(finalEC, 2);
+      finalEcValue.innerHTML = fmt(finalEC, 2) + ' <span class="u">mS/cm</span>';
     } else {
       finalEcRow.style.display = 'none';
     }
