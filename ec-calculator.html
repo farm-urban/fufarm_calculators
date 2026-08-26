@@ -247,14 +247,23 @@
       <div class="field">
         <label for="ecd">Target EC <span class="unit">mS/cm</span></label>
         <input type="number" id="ecd" inputmode="decimal" placeholder="e.g. 1.8" min="0" step="any">
-        <div class="hint">Desired EC excluding the Base EC</div>
+        <div class="hint">The EC required by the plants (excluding the Base EC)</div>
       </div>
     </div>
 
     <div class="field">
-      <label for="dose">Nutrient dose rate <span class="unit">ml per litre, for target EC</span></label>
-      <input type="number" id="dose" inputmode="decimal" placeholder="e.g. 7" min="0" step="any">
+      <label for="dosePreset">Nutrient</label>
+      <select id="dosePreset">
+        <option value="ionic">Ionic (7 ml/L)</option>
+        <option value="hydromax">Hydromax (3 ml/L)</option>
+        <option value="custom">Custom</option>
+      </select>
       <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
+    </div>
+
+    <div class="field" id="customDoseField">
+      <label for="doseCustom">Custom dose rate <span class="unit">ml per litre, for target EC</span></label>
+      <input type="number" id="doseCustom" inputmode="decimal" placeholder="e.g. 7" min="0" step="any">
     </div>
 
     <div class="result" id="result" aria-live="polite">
@@ -283,7 +292,6 @@
 <script>
 (function(){
   // Defaults applied only when nothing has been saved for that field yet.
-  const DEFAULT_DOSE_ML_PER_L = 7;
   const DEFAULT_TARGET_EC = 1.8;
 
   // Tank size presets, in litres.
@@ -292,13 +300,21 @@
     '8-tower': 100
   };
 
+  // Nutrient dose rate presets, in ml per litre.
+  const DOSE_RATES_ML_PER_L = {
+    'ionic': 7,
+    'hydromax': 3
+  };
+
   const volPreset = document.getElementById('volPreset');
   const volCustom = document.getElementById('volCustom');
   const customVolField = document.getElementById('customVolField');
   const baseec = document.getElementById('baseec');
   const eci = document.getElementById('eci');
   const ecd = document.getElementById('ecd');
-  const dose = document.getElementById('dose');
+  const dosePreset = document.getElementById('dosePreset');
+  const doseCustom = document.getElementById('doseCustom');
+  const customDoseField = document.getElementById('customDoseField');
 
   const figure = document.getElementById('figure');
   const caption = document.getElementById('caption');
@@ -312,24 +328,24 @@
   // Fields remembered between visits. Current EC is deliberately excluded —
   // it's a fresh measurement every time.
   const STORE_PREFIX = 'fuEcCalc_';
-  const PERSISTED = { volPreset, volCustom, baseec, ecd, dose };
+  const PERSISTED = { volPreset, volCustom, baseec, ecd, dosePreset, doseCustom };
   const ALL_INPUTS = [...Object.values(PERSISTED), eci];
 
   function loadStored(){
-    let anyDoseSaved = false;
+    let anyDosePresetSaved = false;
     let anyEcdSaved = false;
     Object.entries(PERSISTED).forEach(([key, el]) => {
       try {
         const saved = localStorage.getItem(STORE_PREFIX + key);
         if (saved !== null){
           el.value = saved;
-          if (key === 'dose') anyDoseSaved = true;
+          if (key === 'dosePreset') anyDosePresetSaved = true;
           if (key === 'ecd') anyEcdSaved = true;
         }
       } catch (e) { /* storage unavailable — ignore, form just won't persist */ }
     });
     // First-ever load (nothing saved yet): seed the standard defaults.
-    if (!anyDoseSaved) dose.value = DEFAULT_DOSE_ML_PER_L;
+    if (!anyDosePresetSaved) dosePreset.value = 'ionic';
     if (!anyEcdSaved) ecd.value = DEFAULT_TARGET_EC;
   }
 
@@ -355,12 +371,21 @@
     return parseFloat(volCustom.value);
   }
 
+  function syncCustomDoseVisibility(){
+    customDoseField.style.display = (dosePreset.value === 'custom') ? '' : 'none';
+  }
+
+  function currentDoseRate(){
+    if (dosePreset.value in DOSE_RATES_ML_PER_L) return DOSE_RATES_ML_PER_L[dosePreset.value];
+    return parseFloat(doseCustom.value);
+  }
+
   function update(){
     const Vt_L = currentVolumeL();
     const EC0 = parseFloat(baseec.value);
     const ECi = parseFloat(eci.value);
     const ECd = parseFloat(ecd.value); // nutrient-only target, per bottle spec
-    const Nml = parseFloat(dose.value);
+    const Nml = currentDoseRate();
 
     const haveAll = [Vt_L, EC0, ECi, ECd, Nml].every(v => !isNaN(v) && v >= 0) && Vt_L > 0 && ECd > 0 && Nml > 0;
 
@@ -395,10 +420,13 @@
 
   loadStored();
   syncCustomVolVisibility();
+  syncCustomDoseVisibility();
 
   ALL_INPUTS.forEach(el => el.addEventListener('input', update));
   volPreset.addEventListener('change', syncCustomVolVisibility);
   volPreset.addEventListener('change', update);
+  dosePreset.addEventListener('change', syncCustomDoseVisibility);
+  dosePreset.addEventListener('change', update);
   Object.entries(PERSISTED).forEach(([key, el]) => {
     el.addEventListener('input', () => storeField(key, el));
     el.addEventListener('change', () => storeField(key, el));
