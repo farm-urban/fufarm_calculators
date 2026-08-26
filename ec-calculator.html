@@ -17,8 +17,6 @@
     --peach:#F2AD94;
     --peach-tint:#FCEEE8;
     --peach-border:#F1CBB9;
-    --olive:#7C8C03;
-    --khaki:#A6A26A;
     --paper:#FAF7F1;
     --ink:#22261C;
     --ink-soft:#6B6A55;
@@ -154,7 +152,7 @@
     letter-spacing:-0.02em;
     line-height:1;
   }
-  .result .stat-figure .u{
+  .result .stat-figure .stat-unit{
     font-size:1.1rem;
     font-weight:600;
     margin-left:4px;
@@ -170,8 +168,10 @@
     margin-top:12px;
     padding-top:12px;
     border-top:1px solid rgba(var(--white-rgb),0.25);
-    font-size:.82rem;
-    color:var(--teal-pale-text);
+  }
+
+  .is-hidden{
+    display:none;
   }
 
   .result.warn{
@@ -180,7 +180,7 @@
     border:1.5px solid var(--peach-border);
   }
   .result.warn .stat-figure{color:var(--orange-text);}
-  .result.warn .stat-figure .u{color:var(--orange-text);}
+  .result.warn .stat-figure .stat-unit{color:var(--orange-text);}
   .result.warn .caption{color:var(--warn-text);}
   .result.warn .final-ec{ border-top-color:rgba(var(--orange-text-rgb),0.25); color:var(--warn-text); }
 
@@ -257,10 +257,10 @@
       <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
     </div>
 
-    <div class="result" id="result">
-      <div class="stat-figure" id="figure">— <span class="u">ml</span></div>
+    <div class="result" id="result" aria-live="polite">
+      <div class="stat-figure" id="figure">— <span class="stat-unit">ml</span></div>
       <div class="caption" id="caption">Enter your tank details above</div>
-      <div class="final-ec" id="finalEcRow" style="display:none">
+      <div class="final-ec is-hidden" id="finalEcRow">
         <div class="stat-figure" id="finalEcValue">—</div>
         <div class="caption">Final EC to measure</div>
       </div>
@@ -307,10 +307,13 @@
   const finalEcRow = document.getElementById('finalEcRow');
   const finalEcValue = document.getElementById('finalEcValue');
 
+  const EMPTY_FIGURE_HTML = '— <span class="stat-unit">ml</span>';
+
   // Fields remembered between visits. Current EC is deliberately excluded —
   // it's a fresh measurement every time.
   const STORE_PREFIX = 'fuEcCalc_';
   const PERSISTED = { volPreset, volCustom, baseec, ecd, dose };
+  const ALL_INPUTS = [...Object.values(PERSISTED), eci];
 
   function loadStored(){
     let anyDoseSaved = false;
@@ -339,6 +342,10 @@
     return n.toLocaleString(undefined, {minimumFractionDigits:dp, maximumFractionDigits:dp});
   }
 
+  function renderStat(el, value, dp, unit){
+    el.innerHTML = `${fmt(value, dp)} <span class="stat-unit">${unit}</span>`;
+  }
+
   function syncCustomVolVisibility(){
     customVolField.style.display = (volPreset.value === 'custom') ? '' : 'none';
   }
@@ -359,22 +366,21 @@
 
     // Final EC to measure = target (nutrient-only) + base
     const finalEC = (!isNaN(ECd) && !isNaN(EC0)) ? ECd + EC0 : NaN;
+    finalEcRow.classList.toggle('is-hidden', isNaN(finalEC));
     if (!isNaN(finalEC)){
-      finalEcRow.style.display = '';
-      finalEcValue.innerHTML = fmt(finalEC, 2) + ' <span class="u">mS/cm</span>';
-    } else {
-      finalEcRow.style.display = 'none';
+      renderStat(finalEcValue, finalEC, 2, 'mS/cm');
     }
 
     if (!haveAll){
       result.classList.remove('warn');
-      figure.innerHTML = '— <span class="u">ml</span>';
+      figure.innerHTML = EMPTY_FIGURE_HTML;
       caption.textContent = 'Enter your tank details above';
       return;
     }
 
+    result.classList.toggle('warn', ECi > finalEC);
+
     if (ECi > finalEC){
-      result.classList.add('warn');
       figure.innerHTML = 'n/a';
       caption.textContent = 'Current EC is already above the final target — dilute with water instead of adding nutrient.';
       return;
@@ -383,15 +389,14 @@
     // ml to add = dose rate x volume x (target EC + base EC - current EC) / target EC
     const mlToAdd = Nml * Vt_L * (finalEC - ECi) / ECd;
 
-    result.classList.remove('warn');
-    figure.innerHTML = fmt(mlToAdd, 1) + ' <span class="u">ml</span>';
+    renderStat(figure, mlToAdd, 1, 'ml');
     caption.textContent = `to raise ${fmt(Vt_L,1)} L from EC ${ECi} to EC ${fmt(finalEC,2)}`;
   }
 
   loadStored();
   syncCustomVolVisibility();
 
-  [volPreset, volCustom, baseec, eci, ecd, dose].forEach(el => el.addEventListener('input', update));
+  ALL_INPUTS.forEach(el => el.addEventListener('input', update));
   volPreset.addEventListener('change', syncCustomVolVisibility);
   volPreset.addEventListener('change', update);
   Object.entries(PERSISTED).forEach(([key, el]) => {
