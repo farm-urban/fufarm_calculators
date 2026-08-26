@@ -146,21 +146,9 @@
     background:linear-gradient(155deg,var(--teal),var(--teal-dark));
     color:var(--white);
     text-align:center;
-  }
-  .result #finalEcValue{
-    font-size:2.4rem;
-    font-weight:800;
-    letter-spacing:-0.02em;
-    line-height:1;
-  }
-  .result #finalEcValue .u{
-    font-size:1.1rem;
-    font-weight:600;
-    margin-left:4px;
-    color:var(--peach);
-  }
-  
-  .result .figure{
+  }  
+
+  .result .figure, #finalEcValue{
     font-size:2.4rem;
     font-weight:800;
     letter-spacing:-0.02em;
@@ -251,7 +239,7 @@
     </div>
 
     <div class="field">
-      <label for="baseec">Base EC <span class="unit">mS/cm — your tap water, no nutrient</span></label>
+      <label for="baseec">Base EC <span class="unit">mS/cm</span></label>
       <input type="number" id="baseec" inputmode="decimal" placeholder="e.g. 0.4" min="0" step="any">
       <div class="hint">EC of your plain tap water before any nutrient is added.</div>
     </div>
@@ -265,7 +253,7 @@
       <div class="field">
         <label for="ecd">Target EC <span class="unit">mS/cm</span></label>
         <input type="number" id="ecd" inputmode="decimal" placeholder="e.g. 1.8" min="0" step="any">
-        <div class="hint">Required EC excluding the Base EC</div>
+        <div class="hint">Desired EC excluding the Base EC</div>
       </div>
     </div>
 
