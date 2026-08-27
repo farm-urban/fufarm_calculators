@@ -393,7 +393,7 @@
     const finalEC = (!isNaN(ECd) && !isNaN(EC0)) ? ECd + EC0 : NaN;
     finalEcRow.classList.toggle('is-hidden', isNaN(finalEC));
     if (!isNaN(finalEC)){
-      renderStat(finalEcValue, finalEC, 2, 'mS/cm');
+      renderStat(finalEcValue, finalEC, 1, 'mS/cm');
     }
 
     if (!haveAll){
@@ -415,7 +415,7 @@
     const mlToAdd = Nml * Vt_L * (finalEC - ECi) / ECd;
 
     renderStat(figure, mlToAdd, 1, 'ml');
-    caption.textContent = `to raise ${fmt(Vt_L,1)} L from EC ${ECi} to EC ${fmt(finalEC,2)}`;
+    caption.textContent = `to raise ${fmt(Vt_L,1)} L from EC ${ECi} to EC ${fmt(finalEC,1)}`;
   }
 
   loadStored();
