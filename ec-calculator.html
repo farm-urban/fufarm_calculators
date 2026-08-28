@@ -362,30 +362,28 @@
     el.innerHTML = `${fmt(value, dp)} <span class="stat-unit">${unit}</span>`;
   }
 
-  function syncCustomVolVisibility(){
-    customVolField.style.display = (volPreset.value === 'custom') ? '' : 'none';
+  // Builds the visibility-sync + value-getter pair shared by preset/custom field combos.
+  function createPresetField(presetEl, customField, customInput, presetMap){
+    return {
+      syncVisibility(){
+        customField.style.display = (presetEl.value === 'custom') ? '' : 'none';
+      },
+      currentValue(){
+        if (presetEl.value in presetMap) return presetMap[presetEl.value];
+        return parseFloat(customInput.value);
+      }
+    };
   }
 
-  function currentVolumeL(){
-    if (volPreset.value in TOWER_VOLUMES_L) return TOWER_VOLUMES_L[volPreset.value];
-    return parseFloat(volCustom.value);
-  }
-
-  function syncCustomDoseVisibility(){
-    customDoseField.style.display = (dosePreset.value === 'custom') ? '' : 'none';
-  }
-
-  function currentDoseRate(){
-    if (dosePreset.value in DOSE_RATES_ML_PER_L) return DOSE_RATES_ML_PER_L[dosePreset.value];
-    return parseFloat(doseCustom.value);
-  }
+  const volField = createPresetField(volPreset, customVolField, volCustom, TOWER_VOLUMES_L);
+  const doseField = createPresetField(dosePreset, customDoseField, doseCustom, DOSE_RATES_ML_PER_L);
 
   function update(){
-    const Vt_L = currentVolumeL();
+    const Vt_L = volField.currentValue();
     const EC0 = parseFloat(baseec.value);
     const ECi = parseFloat(eci.value);
     const ECd = parseFloat(ecd.value); // nutrient-only target, per bottle spec
-    const Nml = currentDoseRate();
+    const Nml = doseField.currentValue();
 
     const haveAll = [Vt_L, EC0, ECi, ECd, Nml].every(v => !isNaN(v) && v >= 0) && Vt_L > 0 && ECd > 0 && Nml > 0;
 
@@ -419,13 +417,13 @@
   }
 
   loadStored();
-  syncCustomVolVisibility();
-  syncCustomDoseVisibility();
+  volField.syncVisibility();
+  doseField.syncVisibility();
 
   ALL_INPUTS.forEach(el => el.addEventListener('input', update));
-  volPreset.addEventListener('change', syncCustomVolVisibility);
+  volPreset.addEventListener('change', volField.syncVisibility);
   volPreset.addEventListener('change', update);
-  dosePreset.addEventListener('change', syncCustomDoseVisibility);
+  dosePreset.addEventListener('change', doseField.syncVisibility);
   dosePreset.addEventListener('change', update);
   Object.entries(PERSISTED).forEach(([key, el]) => {
     el.addEventListener('input', () => storeField(key, el));
