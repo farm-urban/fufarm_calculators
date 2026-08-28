@@ -1,5 +1,7 @@
 # fufarm_calculators
-For calculating hydroponic growing parameters
+Code for calculating hydroponic growing parameters.
+
+https://ec.farmurban.co.uk
 
 ## QR Codes
 * [PNG](https://raw.githubusercontent.com/farm-urban/fufarm_calculators/main/ec_farmurban_qr_qrcodemonkey.png)
