@@ -306,22 +306,13 @@
     'hydromax': 3
   };
 
-  const volPreset = document.getElementById('volPreset');
-  const volCustom = document.getElementById('volCustom');
-  const customVolField = document.getElementById('customVolField');
-  const baseec = document.getElementById('baseec');
-  const eci = document.getElementById('eci');
-  const ecd = document.getElementById('ecd');
-  const dosePreset = document.getElementById('dosePreset');
-  const doseCustom = document.getElementById('doseCustom');
-  const customDoseField = document.getElementById('customDoseField');
-
-  const figure = document.getElementById('figure');
-  const caption = document.getElementById('caption');
-  const result = document.getElementById('result');
-
-  const finalEcRow = document.getElementById('finalEcRow');
-  const finalEcValue = document.getElementById('finalEcValue');
+  // The HTML ids are the single source of truth — grab every element that has
+  // one and destructure out the ones this script uses, no id list to keep in sync.
+  const el = Object.fromEntries([...document.querySelectorAll('[id]')].map(e => [e.id, e]));
+  const {
+    volPreset, volCustom, customVolField, baseec, eci, ecd, dosePreset, doseCustom, customDoseField,
+    figure, caption, result, finalEcRow, finalEcValue
+  } = el;
 
   const EMPTY_FIGURE_HTML = '— <span class="stat-unit">ml</span>';
 
