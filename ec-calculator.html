@@ -356,6 +356,7 @@
   // Builds the visibility-sync + value-getter pair shared by preset/custom field combos.
   function createPresetField(presetEl, customField, customInput, presetMap){
     return {
+      presetEl,
       syncVisibility(){
         customField.style.display = (presetEl.value === 'custom') ? '' : 'none';
       },
@@ -412,13 +413,10 @@
   doseField.syncVisibility();
 
   ALL_INPUTS.forEach(el => el.addEventListener('input', update));
-  volPreset.addEventListener('change', volField.syncVisibility);
-  volPreset.addEventListener('change', update);
-  dosePreset.addEventListener('change', doseField.syncVisibility);
-  dosePreset.addEventListener('change', update);
+  // 'input' (not 'change') fires on <select> in all modern browsers, so one event covers both.
+  [volField, doseField].forEach(field => field.presetEl.addEventListener('input', field.syncVisibility));
   Object.entries(PERSISTED).forEach(([key, el]) => {
     el.addEventListener('input', () => storeField(key, el));
-    el.addEventListener('change', () => storeField(key, el));
   });
 
   update();
