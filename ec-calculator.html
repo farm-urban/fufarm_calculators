@@ -405,9 +405,8 @@
       return;
     }
 
-    // ml to add = dose rate x volume x (target EC + base EC - current EC) / target EC
-    const mlToAdd = Nml * Vt_L * (finalEC - ECi) / ECd;
-
+    // ml to add 
+    const mlToAdd = Nml * Vt_L * (1-(ECi / (ECd+EC0)));
     renderStat(figure, mlToAdd, 1, 'ml');
     caption.textContent = `to raise ${fmt(Vt_L,1)} L from EC ${ECi} to EC ${fmt(finalEC,1)}`;
   }
