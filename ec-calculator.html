@@ -223,11 +223,7 @@
 
     <div class="field">
       <label for="volPreset">Sump volume</label>
-      <select id="volPreset">
-        <option value="5-tower">5-tower (35 L)</option>
-        <option value="8-tower">8-tower (100 L)</option>
-        <option value="custom">Custom</option>
-      </select>
+      <select id="volPreset"></select>
       <div class="hint">Pick your system, or enter a custom volume.</div>
     </div>
 
@@ -257,11 +253,7 @@
 
     <div class="field">
       <label for="dosePreset">Nutrient</label>
-      <select id="dosePreset">
-        <option value="ionic">Ionic (7 ml/L)</option>
-        <option value="hydromax">Hydromax (3 ml/L)</option>
-        <option value="custom">Custom</option>
-      </select>
+      <select id="dosePreset"></select>
       <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
     </div>
 
@@ -298,16 +290,19 @@
   // Defaults applied only when nothing has been saved for that field yet.
   const DEFAULT_TARGET_EC = 1.8;
 
+  // Presets are the single source of truth: the <select> options are generated
+  // from these (key = option value, label = display name, value = number used).
+
   // Sump volume presets, in litres.
-  const TOWER_VOLUMES_L = {
-    '5-tower': 35,
-    '8-tower': 100
+  const SUMP_VOLUMES_L = {
+    '5-tower': { label: '5-tower (35L)', value: 35 },
+    '8-tower': { label: '8-tower (100L)', value: 100 }
   };
 
   // Nutrient dose rate presets, in ml per litre.
   const DOSE_RATES_ML_PER_L = {
-    'ionic': 7,
-    'hydromax': 3
+    'ionic': { label: 'Ionic (7ml/L)', value: 7 },
+    'hydromax': { label: 'Hydromax (3ml/L)', value: 3 }
   };
 
   // The HTML ids are the single source of truth — grab every element that has
@@ -317,6 +312,15 @@
     volPreset, volCustom, customVolField, baseec, eci, ecd, dosePreset, doseCustom, customDoseField,
     figure, caption, result, finalEcRow, finalEcValue
   } = el;
+
+  function populatePresetOptions(select, presetMap){
+    const options = Object.entries(presetMap).map(([key, p]) =>
+      new Option(`${p.label}`, key));
+    options.push(new Option('Custom', 'custom'));
+    select.replaceChildren(...options);
+  }
+  populatePresetOptions(volPreset, SUMP_VOLUMES_L);
+  populatePresetOptions(dosePreset, DOSE_RATES_ML_PER_L);
 
   const EMPTY_FIGURE_HTML = '— <span class="stat-unit">ml</span>';
 
@@ -365,13 +369,13 @@
         customField.style.display = (presetEl.value === 'custom') ? '' : 'none';
       },
       currentValue(){
-        if (presetEl.value in presetMap) return presetMap[presetEl.value];
+        if (presetEl.value in presetMap) return presetMap[presetEl.value].value;
         return parseFloat(customInput.value);
       }
     };
   }
 
-  const volField = createPresetField(volPreset, customVolField, volCustom, TOWER_VOLUMES_L);
+  const volField = createPresetField(volPreset, customVolField, volCustom, SUMP_VOLUMES_L);
   const doseField = createPresetField(dosePreset, customDoseField, doseCustom, DOSE_RATES_ML_PER_L);
 
   function update(){
