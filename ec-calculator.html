@@ -233,6 +233,17 @@
     </div>
 
     <div class="field">
+      <label for="dosePreset">Nutrient</label>
+      <select id="dosePreset"></select>
+      <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
+    </div>
+
+    <div class="field" id="customDoseField">
+      <label for="doseCustom">Custom dose rate <span class="unit">ml per litre, for target EC</span></label>
+      <input type="number" id="doseCustom" inputmode="decimal" placeholder="e.g. 7" min="0" step="any">
+    </div>
+
+    <div class="field">
       <label for="baseec">Base EC <span class="unit">mS/cm</span></label>
       <input type="number" id="baseec" inputmode="decimal" placeholder="e.g. 0.4" min="0" step="any">
       <div class="hint">EC of your plain tap water before any nutrient is added.</div>
@@ -245,30 +256,19 @@
         <div class="hint">Measured EC of the water in your system.</div>
       </div>
       <div class="field">
-        <label for="ecd">Target EC <span class="unit">mS/cm</span></label>
+        <label for="ecd">Plant standard EC <span class="unit">mS/cm</span></label>
         <input type="number" id="ecd" inputmode="decimal" placeholder="e.g. 1.8" min="0" step="any">
         <div class="hint">The EC required by the plants (excluding the Base EC)</div>
       </div>
     </div>
 
-    <div class="field">
-      <label for="dosePreset">Nutrient</label>
-      <select id="dosePreset"></select>
-      <div class="hint">The manufacturer's ml/L dosing rate that reaches your target EC when mixed into your tap water. Usually printed on the nutrient bottle.</div>
-    </div>
-
-    <div class="field" id="customDoseField">
-      <label for="doseCustom">Custom dose rate <span class="unit">ml per litre, for target EC</span></label>
-      <input type="number" id="doseCustom" inputmode="decimal" placeholder="e.g. 7" min="0" step="any">
-    </div>
-
     <div class="result" id="result" aria-live="polite">
-      <div class="stat-figure" id="figure">— <span class="stat-unit">ml</span></div>
-      <div class="caption" id="caption">Enter your tank details above</div>
       <div class="final-ec is-hidden" id="finalEcRow">
         <div class="stat-figure" id="finalEcValue">—</div>
-        <div class="caption">Final EC to measure</div>
+        <div class="caption">Target EC to measure</div>
       </div>
+      <div class="stat-figure" id="figure">— <span class="stat-unit">ml</span></div>
+      <div class="caption" id="caption">Enter your tank details above</div>
     </div>
 
     <!-- <p class="note">
