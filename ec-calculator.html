@@ -156,6 +156,12 @@
     letter-spacing:-0.02em;
     line-height:1;
   }
+  .result .stat-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:10px;
+  }
   .result .stat-figure .stat-unit{
     font-size:1.1rem;
     font-weight:600;
@@ -164,7 +170,7 @@
   }
 
   .result .caption{
-    margin-top:6px;
+    margin:0;
     font-size:.8rem;
     color:var(--color-result-muted);
   }
@@ -258,12 +264,15 @@
     </div>
 
     <div class="result" id="result" aria-live="polite">
-      <div class="final-ec is-hidden" id="finalEcRow">
+      <div class="final-ec stat-row is-hidden" id="finalEcRow">
         <div class="stat-figure" id="finalEcValue">—</div>
         <div class="caption">Target EC to measure</div>
       </div>
-      <div class="stat-figure" id="figure">— <span class="stat-unit">ml</span></div>
-      <div class="caption" id="caption">Enter your tank details above</div>
+      <hr/>
+      <div class="stat-row">
+        <div class="stat-figure" id="figure">— <span class="stat-unit">ml</span></div>
+        <div class="caption" id="caption">Enter your tank details above</div>
+      </div>
     </div>
 
     <!-- <p class="note">
@@ -407,7 +416,7 @@
     // ml to add 
     const mlToAdd = Nml * Vt_L * (1-(ECi / (ECd+EC0)));
     renderStat(figure, mlToAdd, 1, 'ml');
-    caption.textContent = 'of nutrient to add.';
+    caption.textContent = 'Nutrient to add.';
   }
 
   loadStored();
